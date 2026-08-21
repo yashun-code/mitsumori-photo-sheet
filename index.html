@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>現場写真見積もりシート作成ツール</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>現場写真見積もりシート作成ツール</h1>
+    <p class="sub">写真と見積もり依頼を、ひとつのシートに</p>
+  </header>
+
+  <main class="layout">
+    <section class="panel" aria-labelledby="input-heading">
+      <h2 id="input-heading">基本情報</h2>
+      <div class="field">
+        <label for="site-name">現場名 <span class="req">必須</span></label>
+        <input id="site-name" type="text" autocomplete="off" placeholder="例：八戸市石堂邸">
+      </div>
+      <div class="field">
+        <label for="address">住所 <span class="req">必須</span></label>
+        <input id="address" type="text" autocomplete="street-address" placeholder="例：八戸市石堂二丁目24番30号">
+      </div>
+      <div class="field">
+        <label for="weekday">希望曜日</label>
+        <input id="weekday" type="text" autocomplete="off" placeholder="例：土曜日">
+      </div>
+      <div class="field">
+        <label for="work-memo">作業内容メモ</label>
+        <textarea id="work-memo" placeholder="作業内容や希望を入力してください"></textarea>
+      </div>
+
+      <h2 class="photos-heading">写真 <span class="heading-hint">ドラッグで並べ替え</span></h2>
+      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-controls="photo-input">
+        <span class="icon" aria-hidden="true">📷</span>
+        写真をドラッグ＆ドロップ、またはクリックして選択
+        <span class="hint">複数選択可・6枚を超えると自動でページ分割</span>
+        <input id="photo-input" type="file" accept="image/*" multiple hidden>
+      </div>
+      <div id="thumb-list" class="thumb-list" aria-live="polite"></div>
+      <button id="add-more" class="add-more" type="button">＋ 写真を追加</button>
+      <p id="photo-count" class="photo-count">写真はまだありません</p>
+    </section>
+
+    <section class="preview-wrap" aria-labelledby="preview-heading">
+      <div class="preview-toolbar">
+        <div>
+          <h2 id="preview-heading" class="preview-title">プレビュー</h2>
+          <div id="page-tabs" class="page-tabs" role="tablist" aria-label="ページ切り替え"></div>
+        </div>
+        <div class="actions">
+          <button id="copy-mail" class="btn btn-outline" type="button">メール文面をコピー</button>
+          <button id="download-current" class="btn btn-primary" type="button">PNGをダウンロード</button>
+        </div>
+      </div>
+      <p id="validation-message" class="validation-message" role="status">現場名と住所を入力すると操作できます</p>
+      <div class="sheet-wrap-scroll">
+        <div id="sheet" class="sheet" aria-label="見積もり依頼シート"></div>
+      </div>
+      <div id="page-downloads" class="page-downloads"></div>
+      <p class="note">写真が7枚以上になると自動で「2ページ目」以降が追加されます。画像はこのブラウザ内だけで処理されます。</p>
+    </section>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

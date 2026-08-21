@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>現場写真見積もりシート作成ツール - モックアップv1</title>
+<style>
+  :root {
+    --blue-deep: #0d6e8f;
+    --blue-mid: #0e9bc4;
+    --blue-pale: #e7f5fa;
+    --accent: #e0672c;
+    --ink: #26302b;
+    --ink-sub: #6b756f;
+    --line: #dde3df;
+    --bg: #f4f6f4;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Yu Gothic", -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .topbar {
+    background: var(--blue-deep);
+    color: #fff;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar h1 {
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: .02em;
+  }
+  .topbar .sub {
+    font-size: 12px;
+    opacity: .8;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+    padding: 20px;
+    align-items: start;
+  }
+
+  /* ---------- 左：入力パネル ---------- */
+  .panel {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .panel h2 {
+    font-size: 13px;
+    color: var(--blue-deep);
+    margin: 0 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--blue-pale);
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-sub);
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+  .field label .req {
+    color: var(--accent);
+    margin-left: 4px;
+    font-size: 11px;
+  }
+  .field input[type=text], .field textarea, .field select {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 9px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--ink);
+    background: #fafbfa;
+  }
+  .field textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
+  .field input:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--blue-mid);
+    background: #fff;
+  }
+
+  .dropzone {
+    border: 2px dashed #a9d3e0;
+    border-radius: 8px;
+    background: var(--blue-pale);
+    padding: 22px 12px;
+    text-align: center;
+    color: var(--blue-deep);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 12px;
+  }
+  .dropzone .icon { font-size: 22px; display:block; margin-bottom: 6px; }
+  .dropzone .hint { font-weight: 400; color: var(--ink-sub); font-size: 11px; margin-top: 4px; }
+
+  .thumb-list { display: flex; flex-direction: column; gap: 8px; }
+  .thumb-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px;
+    background: #fafbfa;
+  }
+  .thumb-row .drag { color: #b7bfba; font-size: 14px; cursor: grab; padding: 0 2px; }
+  .thumb-row .num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .thumb-row .thumb-img {
+    width: 44px; height: 32px;
+    border-radius: 4px;
+    background: #cfd8d2;
+    background-size: cover;
+    flex-shrink: 0;
+  }
+  .thumb-row .memo {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    color: var(--ink-sub);
+    padding: 4px 2px;
+  }
+  .thumb-row .memo:focus { outline: none; background: #fff; border-radius: 4px; }
+  .thumb-row .del { color: #c9827a; font-size: 15px; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+
+  .add-more {
+    margin-top: 10px;
+    width: 100%;
+    background: none;
+    border: 1px dashed var(--line);
+    color: var(--ink-sub);
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  /* ---------- 右：プレビュー ---------- */
+  .preview-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .preview-toolbar {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .page-tabs { display: flex; gap: 6px; }
+  .page-tab {
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 14px;
+    background: #e3e9e5;
+    color: var(--ink-sub);
+    font-weight: 600;
+  }
+  .page-tab.active { background: var(--blue-deep); color: #fff; }
+
+  .actions { display: flex; gap: 8px; }
+  .btn {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--blue-deep); color: #fff; }
+  .btn-outline { background: #fff; color: var(--blue-deep); border: 1px solid var(--blue-deep); }
+
+  .sheet {
+    width: 100%;
+    max-width: 900px;
+    aspect-ratio: 297 / 210;
+    background: #fff;
+    border: 1px solid var(--line);
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+  }
+  .sheet-header {
+    border-bottom: 2px solid var(--blue-deep);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+  .sheet-header .title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .sheet-header .title-row h3 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--blue-deep);
+    letter-spacing: .06em;
+  }
+  .sheet-header .title-row .date { font-size: 10px; color: var(--ink-sub); }
+  .sheet-meta { font-size: 11px; color: var(--ink); line-height: 1.7; }
+  .sheet-meta b { color: var(--blue-deep); margin-right: 4px; }
+  .sheet-meta .row { display: flex; gap: 18px; flex-wrap: wrap; }
+  .sheet-meta .memo { margin-top: 4px; color: var(--ink-sub); }
+
+  .sheet-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .photo-card {
+    position: relative;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #eef1ef;
+  }
+  .photo-card .img {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #d6ecf3, #bfe0ec);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b96a3;
+    font-size: 11px;
+  }
+  .photo-card .badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  }
+  .photo-card.empty {
+    border-style: dashed;
+    background: #f7f8f7;
+  }
+  .photo-card.empty .img { background: none; color: #c3cac5; font-size: 20px; }
+
+  .note {
+    max-width: 900px;
+    font-size: 11px;
+    color: var(--ink-sub);
+    text-align: center;
+  }
+
+  /* ---------- スマホ対応 ---------- */
+  @media (max-width: 768px) {
+    .topbar { flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 16px; }
+    .topbar h1 { font-size: 15px; }
+    .layout { grid-template-columns: 1fr; padding: 12px; gap: 14px; }
+    .panel { padding: 16px; }
+
+    /* 入力欄はタップしやすい高さを確保 */
+    .field input[type=text], .field textarea, .field select { font-size: 16px; padding: 11px 10px; }
+    .dropzone { padding: 26px 12px; }
+
+    /* プレビューは横スクロールでシート全体を保持（縮小しすぎて文字が読めなくなるのを防ぐ） */
+    .preview-toolbar { flex-wrap: wrap; gap: 8px; max-width: 100%; }
+    .btn { padding: 10px 14px; font-size: 12px; }
+    .sheet-wrap-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .sheet { min-width: 640px; max-width: none; }
+    .note { padding: 0 12px; }
+
+    /* サムネイル行もタップ領域を確保 */
+    .thumb-row { padding: 8px 6px; }
+    .thumb-row .del { font-size: 18px; padding: 4px 6px; }
+    .thumb-row .drag { font-size: 18px; padding: 4px 6px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>現場写真見積もりシート作成ツール</h1>
+  <div class="sub">モックアップ v1（レイアウト確認用・ダミーデータ）</div>
+</div>
+
+<div class="layout">
+
+  <!-- 左：入力パネル -->
+  <div class="panel">
+    <h2>基本情報</h2>
+    <div class="field">
+      <label>現場名 <span class="req">必須</span></label>
+      <input type="text" value="八戸市石堂邸">
+    </div>
+    <div class="field">
+      <label>住所 <span class="req">必須</span></label>
+      <input type="text" value="八戸市石堂二丁目24番30号">
+    </div>
+    <div class="field">
+      <label>希望曜日</label>
+      <input type="text" value="土曜日">
+    </div>
+    <div class="field">
+      <label>作業内容メモ</label>
+      <textarea>敷地全体の草刈り＋木の剪定。表(赤色の葉)の木の剪定は一回り小さく剪定・裏の木の剪定は2m程度まで丈を詰めてOK。木の下側は雑草の草取りも実施。草刈りは敷地の境目が多いかと思いますが、敷地全体希望です。</textarea>
+    </div>
+
+    <h2 style="margin-top:22px;">写真（ドラッグで並べ替え＝番号が自動更新）</h2>
+    <div class="dropzone">
+      <span class="icon">📷</span>
+      写真をドラッグ＆ドロップ、またはクリックして選択
+      <div class="hint">複数選択可・6枚を超えると自動で2ページ目へ</div>
+    </div>
+    <div class="thumb-list">
+      <div class="thumb-row">
+        <span class="drag">⠿</span>
+        <span class="num">1</span>
+        <span class="thumb-img"></span>
+        <input class="memo" value="敷地入口の庭木">
+        <span class="del">✕</span>
+      </div>
+      <div class="thumb-row">
+        <span class="drag">⠿</span>
+        <span class="num">2</span>
+        <span class="thumb-img"></span>
+        <input class="memo" value="建物脇の雑草">
+        <span class="del">✕</span>
+      </div>
+      <div class="thumb-row">
+        <span class="drag">⠿</span>
+        <span class="num">3</span>
+        <span class="thumb-img"></span>
+        <input class="memo" value="植栽帯（表）">
+        <span class="del">✕</span>
+      </div>
+      <div class="thumb-row">
+        <span class="drag">⠿</span>
+        <span class="num">4</span>
+        <span class="thumb-img"></span>
+        <input class="memo" value="駐車場脇の通路">
+        <span class="del">✕</span>
+      </div>
+      <div class="thumb-row">
+        <span class="drag">⠿</span>
+        <span class="num">5</span>
+        <span class="thumb-img"></span>
+        <input class="memo" value="フェンス沿い">
+        <span class="del">✕</span>
+      </div>
+      <div class="thumb-row">
+        <span class="drag">⠿</span>
+        <span class="num">6</span>
+        <span class="thumb-img"></span>
+        <input class="memo" value="赤葉の木（表）">
+        <span class="del">✕</span>
+      </div>
+    </div>
+    <button class="add-more">＋ 写真を追加</button>
+  </div>
+
+  <!-- 右：プレビュー -->
+  <div class="preview-wrap">
+    <div class="preview-toolbar">
+      <div class="page-tabs">
+        <span class="page-tab active">1ページ目</span>
+      </div>
+      <div class="actions">
+        <button class="btn btn-outline">メール文面をコピー</button>
+        <button class="btn btn-primary">PNGをダウンロード</button>
+      </div>
+    </div>
+
+    <div class="sheet-wrap-scroll">
+    <div class="sheet">
+      <div class="sheet-header">
+        <div class="title-row">
+          <h3>現場写真見積もり依頼</h3>
+          <span class="date">作成日：2026/08/21</span>
+        </div>
+        <div class="sheet-meta">
+          <div class="row">
+            <div><b>現場名</b>八戸市石堂邸</div>
+            <div><b>住所</b>八戸市石堂二丁目24番30号</div>
+            <div><b>希望曜日</b>土曜日</div>
+          </div>
+          <div class="memo"><b>作業内容</b>敷地全体の草刈り＋木の剪定。表(赤色の葉)の木の剪定は一回り小さく剪定・裏の木の剪定は2m程度まで丈を詰めてOK。木の下側は雑草の草取りも実施。草刈りは敷地の境目が多いかと思いますが、敷地全体希望です。</div>
+        </div>
+      </div>
+      <div class="sheet-grid">
+        <div class="photo-card"><span class="badge">1</span><div class="img">写真1</div></div>
+        <div class="photo-card"><span class="badge">2</span><div class="img">写真2</div></div>
+        <div class="photo-card"><span class="badge">3</span><div class="img">写真3</div></div>
+        <div class="photo-card"><span class="badge">4</span><div class="img">写真4</div></div>
+        <div class="photo-card"><span class="badge">5</span><div class="img">写真5</div></div>
+        <div class="photo-card"><span class="badge">6</span><div class="img">写真6</div></div>
+      </div>
+    </div>
+    </div>
+    <div class="note">※ 写真が7枚以上になると自動で「2ページ目」タブが増え、シートが分割されます</div>
+  </div>
+
+</div>
+
+</body>
+</html>
