@@ -71,9 +71,12 @@ button { -webkit-tap-highlight-color: transparent; }
 .sheet-title { margin: 0; overflow: hidden; color: var(--blue-deep); font-size: clamp(12px, 2vw, 18px); font-weight: 700; letter-spacing: .06em; text-overflow: ellipsis; white-space: nowrap; }
 .date { color: var(--ink-sub); font-size: clamp(7px, 1.1vw, 10px); white-space: nowrap; }
 .sheet-meta { color: var(--ink); font-size: clamp(7px, 1.22vw, 11px); line-height: 1.7; }
-.meta-row { display: flex; flex-wrap: wrap; gap: 0 18px; }
-.sheet-meta b { margin-right: 4px; color: var(--blue-deep); }
-.sheet-meta .memo-line { display: flex; align-items: flex-start; overflow: hidden; margin-top: .15%; color: var(--ink-sub); font-size: clamp(10px, 1.55vw, 14px); line-height: 1.35; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0; margin-bottom: 1.9%; padding-bottom: .9%; border-bottom: 1px dashed var(--line); }
+.meta-row > div { display: flex; align-items: baseline; gap: 6px; padding: 0 16px; }
+.meta-row > div:first-child { padding-left: 0; }
+.meta-row > div + div { border-left: 1px solid var(--line); }
+.sheet-meta b { margin-right: 0; padding: .15em .5em; border-radius: 3px; background: #cdedf7; color: var(--blue-deep); font-weight: 700; white-space: nowrap; }
+.sheet-meta .memo-line { display: flex; align-items: flex-start; overflow: hidden; margin-top: 0; color: var(--ink-sub); font-size: clamp(10px, 1.55vw, 14px); line-height: 1.35; }
 .sheet-meta .memo-line b { flex: 0 0 auto; }
 .memo-text { min-width: 0; }
 .memo-row { display: block; min-height: 1.35em; }

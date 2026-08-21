@@ -60,6 +60,22 @@
     return lines;
   }
 
+  function drawMetaField(ctx, label, value, x, baselineY, scale) {
+    ctx.font = `700 ${3.1 * scale}px "Hiragino Sans", "Yu Gothic", sans-serif`;
+    const padX = 1.3 * scale;
+    const labelWidth = ctx.measureText(label).width;
+    const boxHeight = 4.3 * scale;
+    ctx.fillStyle = '#cdedf7';
+    ctx.fillRect(x, baselineY - boxHeight * 0.78, labelWidth + padX * 2, boxHeight);
+    ctx.fillStyle = '#0d6e8f';
+    ctx.fillText(label, x + padX, baselineY);
+    ctx.font = `${3.35 * scale}px "Hiragino Sans", "Yu Gothic", sans-serif`;
+    ctx.fillStyle = '#26302b';
+    const valueX = x + labelWidth + padX * 2 + 1.8 * scale;
+    ctx.fillText(value, valueX, baselineY);
+    return valueX + ctx.measureText(value).width;
+  }
+
   function memoContext() {
     const canvas = document.createElement('canvas');
     return canvas.getContext('2d');
@@ -248,10 +264,18 @@
     ctx.fillStyle = '#6b756f'; ctx.font = `${3.2 * scale}px "Hiragino Sans", "Yu Gothic", sans-serif`; ctx.textAlign = 'right';
     ctx.fillText(`作成日：${new Intl.DateTimeFormat('ja-JP').format(new Date())}`, right, top + 5.2 * scale); ctx.textAlign = 'left';
     ctx.strokeStyle = '#0d6e8f'; ctx.lineWidth = 0.65 * scale; ctx.beginPath(); ctx.moveTo(left, top + 9.2 * scale); ctx.lineTo(right, top + 9.2 * scale); ctx.stroke();
-    ctx.fillStyle = '#26302b'; ctx.font = `${3.35 * scale}px "Hiragino Sans", "Yu Gothic", sans-serif`;
-    const metaY = top + 14.2 * scale; ctx.fillText(`住所  ${state.address || '（未入力）'}`, left, metaY); ctx.fillText(`希望曜日  ${state.weekday || '指定なし'}`, left + 178 * scale, metaY);
+    const metaY = top + 14.2 * scale;
+    const addrEnd = drawMetaField(ctx, '住所', state.address || '（未入力）', left, metaY, scale);
+    const dividerX = addrEnd + 5 * scale;
+    ctx.strokeStyle = '#dde3df'; ctx.lineWidth = 0.35 * scale;
+    ctx.beginPath(); ctx.moveTo(dividerX, metaY - 3.4 * scale); ctx.lineTo(dividerX, metaY + 1.2 * scale); ctx.stroke();
+    drawMetaField(ctx, '希望曜日', state.weekday || '指定なし', dividerX + 5 * scale, metaY, scale);
+    const rowDividerY = metaY + 3.6 * scale;
+    ctx.strokeStyle = '#dde3df'; ctx.lineWidth = 0.3 * scale; ctx.setLineDash([1.2 * scale, 1 * scale]);
+    ctx.beginPath(); ctx.moveTo(left, rowDividerY); ctx.lineTo(right, rowDividerY); ctx.stroke();
+    ctx.setLineDash([]);
     ctx.fillStyle = '#6b756f'; ctx.font = `${MEMO_FONT_MM * scale}px "Hiragino Sans", "Yu Gothic", sans-serif`;
-    const memoLines = memoLayout(ctx); const memoY = metaY + 5 * scale;
+    const memoLines = memoLayout(ctx); const memoY = rowDividerY + 4.8 * scale;
     memoLines.forEach((line, index) => ctx.fillText(line, left, memoY + index * MEMO_LINE_HEIGHT_MM * scale));
     const gridX = left; const baseGridY = top + 23 * scale; const gridY = Math.max(baseGridY, memoY + (memoLines.length - 1) * MEMO_LINE_HEIGHT_MM * scale + 3.8 * scale); const gridW = right - left; const gridBottom = top + 199.4 * scale; const gridH = Math.max(50 * scale, gridBottom - gridY); const gap = 3 * scale; const cardW = (gridW - gap * 2) / 3; const cardH = (gridH - gap) / 2;
     for (let slot = 0; slot < PAGE_SIZE; slot += 1) {
