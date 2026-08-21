@@ -4,6 +4,14 @@
   const PAGE_SIZE = 6;
   const CANVAS_WIDTH = 3508;
   const CANVAS_HEIGHT = 2480;
+  const SHEET_WIDTH_MM = 297;
+  const SHEET_HEIGHT_MM = 210;
+  const CONTENT_LEFT_MM = 9.35;
+  const CONTENT_RIGHT_MM = 287.65;
+  // 900px幅のDOMプレビュー（約3.03px/mm）でも14px相当になる寸法。
+  const MEMO_FONT_MM = 4.6;
+  const MEMO_LINE_HEIGHT_MM = 6.2;
+  const MEMO_MAX_HEIGHT_MM = SHEET_HEIGHT_MM * 0.25;
   const state = {
     siteName: '', address: '', weekday: '', workMemo: '',
     photos: [], currentPage: 0, draggedId: null
@@ -22,6 +30,49 @@
   const pagePhotos = (page) => state.photos.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
   const isValid = () => Boolean(state.siteName.trim() && state.address.trim());
   const safeFilePart = (name) => (name.trim() || '現場').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').slice(0, 80);
+
+  function wrapText(context, text, maxWidth, maxLines) {
+    const lines = [];
+    let line = '';
+    Array.from(String(text || '')).forEach((char) => {
+      if (char === '\n') { lines.push(line); line = ''; return; }
+      const candidate = line + char;
+      if (line && context.measureText(candidate).width > maxWidth) {
+        lines.push(line); line = char;
+      } else line = candidate;
+    });
+    if (line || !lines.length) lines.push(line);
+    if (lines.length <= maxLines) return lines;
+    const clipped = lines.slice(0, maxLines);
+    let last = clipped[maxLines - 1];
+    while (last && context.measureText(`${last}…`).width > maxWidth) last = last.slice(0, -1);
+    clipped[maxLines - 1] = `${last}…`;
+    return clipped;
+  }
+
+  function memoLayout(context) {
+    const scale = CANVAS_WIDTH / SHEET_WIDTH_MM;
+    const memo = `作業内容  ${state.workMemo || '（未入力）'}`;
+    context.save();
+    context.font = `${MEMO_FONT_MM * scale}px "Hiragino Sans", "Yu Gothic", sans-serif`;
+    const lines = wrapText(context, memo, (CONTENT_RIGHT_MM - CONTENT_LEFT_MM) * scale, Math.max(1, Math.floor(MEMO_MAX_HEIGHT_MM / MEMO_LINE_HEIGHT_MM)));
+    context.restore();
+    return lines;
+  }
+
+  function memoContext() {
+    const canvas = document.createElement('canvas');
+    return canvas.getContext('2d');
+  }
+
+  function memoMarkup(lines) {
+    const prefix = '作業内容  ';
+    return lines.map((line, index) => {
+      let content = line;
+      if (index === 0 && content.indexOf(prefix) === 0) content = content.slice(prefix.length);
+      return `<span class="memo-row">${index === 0 ? '<b>作業内容</b>' : ''}${esc(content)}</span>`;
+    }).join('');
+  }
 
   function bindField(element, key) {
     element.addEventListener('input', () => {
@@ -150,7 +201,8 @@
   function renderPreview() {
     const photos = pagePhotos(state.currentPage);
     const date = new Intl.DateTimeFormat('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-    els.sheet.innerHTML = `<div class="sheet-header"><div class="title-row"><h3 class="sheet-title">現場写真見積もり依頼</h3><span class="date">作成日：${date}</span></div><div class="sheet-meta"><div class="meta-row"><div><b>現場名</b>${esc(state.siteName) || '（未入力）'}</div><div><b>住所</b>${esc(state.address) || '（未入力）'}</div><div><b>希望曜日</b>${esc(state.weekday) || '指定なし'}</div></div><div class="memo-line"><b>作業内容</b>${esc(state.workMemo) || '（未入力）'}</div></div></div><div class="sheet-grid"></div>`;
+    const lines = memoLayout(memoContext());
+    els.sheet.innerHTML = `<div class="sheet-header"><div class="title-row"><h3 class="sheet-title">${esc(state.siteName) || '（未入力）'}</h3><span class="date">作成日：${date}</span></div><div class="sheet-meta"><div class="meta-row"><div><b>住所</b>${esc(state.address) || '（未入力）'}</div><div><b>希望曜日</b>${esc(state.weekday) || '指定なし'}</div></div><div class="memo-line"><span class="memo-text">${memoMarkup(lines)}</span></div></div></div><div class="sheet-grid"></div>`;
     const grid = els.sheet.querySelector('.sheet-grid');
     for (let slot = 0; slot < PAGE_SIZE; slot += 1) {
       const photo = photos[slot];
@@ -192,14 +244,16 @@
     const ctx = canvas.getContext('2d'); const scale = CANVAS_WIDTH / 297; const photos = pagePhotos(page);
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     const left = 9.35 * scale; const right = 287.65 * scale; const top = 5.56 * scale;
-    ctx.fillStyle = '#0d6e8f'; ctx.font = `700 ${6.2 * scale}px "Hiragino Sans", "Yu Gothic", sans-serif`; ctx.fillText('現場写真見積もり依頼', left, top + 6.2 * scale);
+    ctx.fillStyle = '#0d6e8f'; ctx.font = `700 ${6.2 * scale}px "Hiragino Sans", "Yu Gothic", sans-serif`; ctx.fillText(state.siteName || '（未入力）', left, top + 6.2 * scale);
     ctx.fillStyle = '#6b756f'; ctx.font = `${3.2 * scale}px "Hiragino Sans", "Yu Gothic", sans-serif`; ctx.textAlign = 'right';
     ctx.fillText(`作成日：${new Intl.DateTimeFormat('ja-JP').format(new Date())}`, right, top + 5.2 * scale); ctx.textAlign = 'left';
     ctx.strokeStyle = '#0d6e8f'; ctx.lineWidth = 0.65 * scale; ctx.beginPath(); ctx.moveTo(left, top + 9.2 * scale); ctx.lineTo(right, top + 9.2 * scale); ctx.stroke();
     ctx.fillStyle = '#26302b'; ctx.font = `${3.35 * scale}px "Hiragino Sans", "Yu Gothic", sans-serif`;
-    const metaY = top + 14.2 * scale; ctx.fillText(`現場名  ${state.siteName || '（未入力）'}`, left, metaY); ctx.fillText(`住所  ${state.address || '（未入力）'}`, left + 69 * scale, metaY); ctx.fillText(`希望曜日  ${state.weekday || '指定なし'}`, left + 178 * scale, metaY);
-    ctx.fillStyle = '#6b756f'; ctx.font = `${3.1 * scale}px "Hiragino Sans", "Yu Gothic", sans-serif`; const memo = `作業内容  ${state.workMemo || '（未入力）'}`; ctx.fillText(memo.slice(0, 150), left, metaY + 5 * scale);
-    const gridX = left; const gridY = top + 23 * scale; const gridW = right - left; const gridH = 176.4 * scale; const gap = 3 * scale; const cardW = (gridW - gap * 2) / 3; const cardH = (gridH - gap) / 2;
+    const metaY = top + 14.2 * scale; ctx.fillText(`住所  ${state.address || '（未入力）'}`, left, metaY); ctx.fillText(`希望曜日  ${state.weekday || '指定なし'}`, left + 178 * scale, metaY);
+    ctx.fillStyle = '#6b756f'; ctx.font = `${MEMO_FONT_MM * scale}px "Hiragino Sans", "Yu Gothic", sans-serif`;
+    const memoLines = memoLayout(ctx); const memoY = metaY + 5 * scale;
+    memoLines.forEach((line, index) => ctx.fillText(line, left, memoY + index * MEMO_LINE_HEIGHT_MM * scale));
+    const gridX = left; const baseGridY = top + 23 * scale; const gridY = Math.max(baseGridY, memoY + (memoLines.length - 1) * MEMO_LINE_HEIGHT_MM * scale + 3.8 * scale); const gridW = right - left; const gridBottom = top + 199.4 * scale; const gridH = Math.max(50 * scale, gridBottom - gridY); const gap = 3 * scale; const cardW = (gridW - gap * 2) / 3; const cardH = (gridH - gap) / 2;
     for (let slot = 0; slot < PAGE_SIZE; slot += 1) {
       const x = gridX + (slot % 3) * (cardW + gap); const y = gridY + Math.floor(slot / 3) * (cardH + gap); const photo = photos[slot];
       ctx.fillStyle = photo ? '#eef1ef' : '#f7f8f7'; ctx.fillRect(x, y, cardW, cardH); ctx.strokeStyle = '#dde3df'; ctx.lineWidth = .35 * scale; ctx.strokeRect(x, y, cardW, cardH);

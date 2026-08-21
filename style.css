@@ -73,7 +73,10 @@ button { -webkit-tap-highlight-color: transparent; }
 .sheet-meta { color: var(--ink); font-size: clamp(7px, 1.22vw, 11px); line-height: 1.7; }
 .meta-row { display: flex; flex-wrap: wrap; gap: 0 18px; }
 .sheet-meta b { margin-right: 4px; color: var(--blue-deep); }
-.sheet-meta .memo-line { display: -webkit-box; overflow: hidden; margin-top: .15%; color: var(--ink-sub); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.sheet-meta .memo-line { display: flex; align-items: flex-start; overflow: hidden; margin-top: .15%; color: var(--ink-sub); font-size: clamp(10px, 1.55vw, 14px); line-height: 1.35; }
+.sheet-meta .memo-line b { flex: 0 0 auto; }
+.memo-text { min-width: 0; }
+.memo-row { display: block; min-height: 1.35em; }
 .sheet-grid { min-height: 0; flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 1.2%; margin-top: 1%; }
 .photo-card { position: relative; min-width: 0; min-height: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 6px; background: #eef1ef; }
 .photo-card.empty { border-style: dashed; background: #f7f8f7; }
